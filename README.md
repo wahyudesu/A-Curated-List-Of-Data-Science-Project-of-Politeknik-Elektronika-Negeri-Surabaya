@@ -2,7 +2,9 @@
 
 ## Project
 - [House Price Prediction]().
+- [Life expectancy analysis Countries]()
 - [Analyzing Linear Ridge and Lasso Regression for the Human Development Index in Maluku]()
+- [Analyzing Clustering Sumatera Utara](https://www.kaggle.com/code/wahyuikbalmaulana/analisa-clustering-provinsi-sumatera-indonesia)
 ## Code
 
 ### First Semester
