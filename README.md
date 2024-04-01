@@ -2,7 +2,7 @@
 
 ## Project
 - [House Price Prediction]().
-
+- [Analyzing Linear Ridge and Lasso Regression for the Human Development Index in Maluku]()
 ## Code
 
 ### First Semester
