@@ -1,0 +1,696 @@
+---
+title: "Discriminant Analysis"
+output:
+  word_document: default
+---
+
+# Percobaan ke-1: Studi Kasus 1
+
+## Import Library
+#### Kode
+```{r}
+  library(DT)
+  library(MVN)
+  library(MASS)
+  library(biotools)
+  library(dplyr)
+  library(klaR)
+```
+
+## Read Dataset
+#### Kode
+```{r}
+  data("iris")
+  iris
+```
+#### Analisis
+Berdasarkan tabel di atas, diketahui dataset iris memiliki 150 sampel dan 5 atribut yaitu 'Sepal.Length', 'Sepal.Width', 'Petal.Length', 'Petal.Width', dan 'Species'. Atribut 'Species' dijadikan variabel respon dengan jenis data berupa kategorikal nominal
+
+## Data Overview
+
+### Multivariate Normality
+#### Kode
+```{r}
+  mvn(data = iris[, c(1:4)], multivariatePlot = 'qq')
+```
+#### Analisis
+Berdasarkan hasil yang didapatkan, diketahui bahwa dataset tersebut tidak berdistribusi normal dikarenakan terjadi penolakan multivariate normality pada test 'Henze-Zirkler' dan 'Anderson-Darling' serta terdapat penyimpangan pada garis lurus diakhir 'chi-square qq-plot'. Solusinya, dapat menggunakan Multinomial Logistic Regresion, melakukan transformasi, atau melakukan transformasi pada data tersebut sehingga berdistribusi normal
+
+### Matriks Kovarians Antar Variabel Respon (Spesies)
+#### Kode
+```{r}
+  boxM(data=iris[, c(1:4)], grouping=iris[,5])
+```
+#### Analisis
+Berdasarkan nilai p-value sebesar 2.2e-16 pada Box M test dengan signifikansi 5% yang menunjukkan h0 diterima. Sehingga, dapat disimpulkan bahwa  perbedaan kovarian antar kategori 'Spesies'. Solusinya, dapat menggunakan Multinomial Logistic Regresion, menambahkan sampel, atau melakukan transformasi agar data berdistribusi normal
+
+### Uji Perbedaan Rata-Rata Antar Variabel Respon (Spesies)
+#### Kode
+```{r}
+  m <- manova(formula=cbind(iris$Sepal.Length, iris$Sepal.Width, iris$Petal.Length, iris$Petal.Width) ~ iris$Species)
+  summary(object = m, test = 'Wilks')
+```
+#### Analisis   
+Berdasarkan nilai p-value (2.2e-16) diatas, dapat disimpulkan bahwa terdapat perbedaan rata-rata (nilai variabel prediktor) antar variabel respon
+
+## Data Splitting
+#### Kode
+```{r}
+  set.seed(123)
+  train_index <- sample(seq(nrow(iris)), size = floor(0.75 * nrow(iris)), replace = F)
+  train_data <- iris[train_index, ]
+  test_data <- iris[-train_index, ]
+```
+#### Analisis
+Berdasarkan kode diatas, dilakukan pembagian data pada dataset dengan perbandingan 0.75 untuk data train dan 0.25 untuk data test
+
+## Data Processing
+
+### Membuat Model
+#### Kode
+```{r}
+  linearDA <- lda(formula=Species ~ ., data = train_data)
+  linearDA
+```
+#### Analisis
+Berdasarkan hasil di atas, model Linear Discriminant Analysis dengan menggunakan data train, memiliki probabilitas tiap variabel prediktor (spesies) sebagai berikut:
+
+- 'setosa' dengan probabilitas 0.34
+- 'versicolor' dengan probabilitas 0.29
+- 'virginica' dengan probabilitas 0.37
+
+### Variabel Yang Berpengaruh
+
+#### Kode
+```{r}
+  plot(linearDA, col = as.integer(train_data$Species))
+```
+#### Analisis
+Berdasarkan grafik diatas, diketahui bahwa Proportion of trace LD1 berpengaruh besar terhadap pemilihan varibel respon (Species)
+
+### Linear Score
+
+- Species Setosa
+
+#### Kode
+```{r}
+  setosa <- train_data %>%
+   filter(Species =="setosa")
+  setosa_mean <- sapply(setosa[, -5], mean)
+  setosa_mean
+```
+#### Analisis
+Berdasarkan hasil di atas, rata-rata vektor untuk setiap variabel prediktor untuk variabel respon 'setosa' adalah:
+
+  - 'Sepal.Length': 4.98
+  - 'Sepal.width': 3.41
+  - 'Petal.Length': 1.47
+  - 'Petal.Width': 0.26
+  
+#### Kode
+```{r}
+  setosa_cov <- cov(setosa[, -5])
+  setosa_cov
+```
+#### Analisis
+Berdasarkan hasil di atas, didapatkan matriks kovarians dengan dimensi 4 x 4 antar variabel prediktor untuk varibael respon 'setosa'. Seluruh nilai dalam matriks tersebut di bawah 0.17
+
+- Species Versicolor
+
+#### Kode
+```{r}
+  vcolor <- train_data %>%
+   filter(Species =="versicolor")
+  vcolor_mean <- sapply(vcolor[, -5], mean)
+  vcolor_mean
+```
+#### Analisis
+Berdasarkan hasil di atas, rata-rata vektor untuk setiap variabel prediktor untuk variabel respon 'versicolor' adalah:
+
+  - 'Sepal.Length': 5.97
+  - 'Sepal.width': 2.78
+  - 'Petal.Length': 4.30
+  - 'Petal.Width': 1.33
+  
+#### Kode
+```{r}
+  vcolor_cov <- cov(vcolor[, -5])
+  vcolor_cov
+```
+#### Analisis
+Berdasarkan hasil di atas, didapatkan matriks kovarians dengan dimensi 4 x 4 antar variabel prediktor untuk varibael respon 'versicolor'. Seluruh nilai dalam matriks tersebut di bawah 0.24
+
+- Species Virginica
+
+#### Kode
+```{r}
+  virgin <- train_data %>%
+   filter(Species =="virginica")
+  virgin_mean <- sapply(virgin[, -5], mean)
+  virgin_mean
+```
+#### Analisis
+Berdasarkan hasil di atas, rata-rata vektor untuk setiap variabel prediktor untuk variabel respon 'virginica' adalah:
+
+  - 'Sepal.Length': 6.59
+  - 'Sepal.width': 2.96
+  - 'Petal.Length': 5.53
+  - 'Petal.Width': 2.01
+  
+#### Kode
+```{r}
+  virgin_cov <- cov(virgin[, -5])
+  virgin_cov
+```
+#### Analisis
+Berdasarkan hasil di atas, didapatkan matriks kovarians dengan dimensi 4 x 4 antar variabel prediktor untuk varibael respon 'virginica'. Seluruh nilai dalam matriks tersebut di bawah 0.48
+
+- S-Pooled (Matriks Kovarians Gabungan)
+
+#### Kode
+```{r}
+  Spooled <- (16 * setosa_cov + 16 * vcolor_cov + 16 * virgin_cov) / (16+16+16)
+  Spooled
+```
+#### Analisis
+Berdasarkan hasil di atas, diketahui nilai dalam matriks kovarians gabungan (S-Pooled). Semua nilai dalam matriks tersebut di bawah 0.29
+
+- Fungsi Linear untuk Species Setosa
+
+#### Kode
+```{r}
+  sb0=-0.5*t(setosa_mean)%*%solve(Spooled) %*% setosa_mean
+  sb1=t(setosa_mean) %*% solve(Spooled)
+  sb0
+  sb1
+```
+#### Analisis
+Berdasarkan hasil di atas, diperoleh nilai koefisien untuk respon 'setosa' sebagai berikut:
+  
+  - Intercept (B0): -78.24
+  - Sepal.Length (B1): 22.65
+  - Sepal.Width (B2): 20.76
+  - Petal.Length (B3): -15.76
+  - Petal.Width (B4): -14.47
+
+- Fungsi Linear untuk Species Versicolor
+
+#### Kode
+```{r}
+  cb0=-0.5*t(vcolor_mean)%*%solve(Spooled)%*%vcolor_mean
+  cb1=t(vcolor_mean) %*% solve(Spooled)
+  cb0
+  cb1
+```
+#### Analisis
+Berdasarkan hasil di atas, diperoleh nilai koefisien untuk respon 'versicolor' sebagai berikut:
+  
+  - Intercept (B0): -69.96
+  - Sepal.Length (B1): 14.95
+  - Sepal.Width (B2): 6.39
+  - Petal.Length (B3): 5.04
+  - Petal.Width (B4): 8.38
+
+- Fungsi Linear untuk Species Virginica
+
+#### Kode
+```{r}
+  vb0=-0.5*t(virgin_mean)%*%solve(Spooled)%*%virgin_mean
+  vb1=t(virgin_mean) %*% solve(Spooled)
+  vb0
+  vb1
+```
+#### Analisis
+Berdasarkan hasil di atas, diperoleh nilai koefisien untuk respon 'virginica' sebagai berikut:
+  
+  - Intercept (B0): -99.92
+  - Sepal.Length (B1): 12.09
+  - Sepal.Width (B2): 3.19
+  - Petal.Length (B3): 11.75
+  - Petal.Width (B4): 22.77
+  
+### Klasifikasi/Prediksi Manual
+
+#### Kode
+```{r}
+  X1<-c(5,3.5,1.6,0.6)
+  DL_s = sb0 + sb1[1]*X1[1] + sb1[2]*X1[2] + sb1[3]*X1[3] + sb1[4]*X1[4] + log(0.34)
+  DL_c = cb0 + cb1[1]*X1[1] + cb1[2]*X1[2] + cb1[3]*X1[3] + cb1[4]*X1[4] + log(0.29)
+  DL_v = vb0 + sb1[1]*X1[1] + sb1[2]*X1[2] + sb1[3]*X1[3] + sb1[4]*X1[4] + log(0.37)
+  maks=DL_s
+  if (DL_c>maks) maks=DL_c
+  if (DL_v>maks) maks=DL_v
+  maks
+  if(maks==DL_s){
+    print("X1 adalah setosa")
+  } else if(maks==DL_c){
+    print("X1 adalah versicolor")
+  } else {
+    print("X1 adalah virginica")
+  }
+```
+#### Analisis
+Berdasarkan klasifikasi manual dengan memasukkan vektor data baru dengan nilai (5, 3.5, 1.6, 0.6) ke dalam setiap fungsi linear yang telah dibuat sebelumnya, nilai tertinggi yang diperoleh dari setiap fungsi linear (model) menunjukkan bahwa data baru tersebut termasuk Species 'setosa'. Ditunjukkan dengan nilai fungsi linear sebesar 72.68, yang merupakan nilai tertinggi di antara ketiga fungsi linear
+
+#### Kode
+```{r}
+  X1<-c(6.7,3.1,4.4,1.4)
+  DL_s = sb0 + sb1[1]*X1[1] + sb1[2]*X1[2] + sb1[3]*X1[3] + sb1[4]*X1[4] + log(0.34)
+  DL_c = cb0 + cb1[1]*X1[1] + cb1[2]*X1[2] + cb1[3]*X1[3] + cb1[4]*X1[4] + log(0.29)
+  DL_v = vb0 + sb1[1]*X1[1] + sb1[2]*X1[2] + sb1[3]*X1[3] + sb1[4]*X1[4] + log(0.37)
+  maks=DL_s
+  if (DL_c>maks) maks=DL_c
+  if (DL_v>maks) maks=DL_v
+  maks
+  if(maks==DL_s){
+    print("X1 adalah setosa")
+  } else if(maks==DL_c){
+    print("X1 adalah versicolor")
+  } else {
+    print("X1 adalah virginica")
+  }
+```
+#### Analisis
+Berdasarkan klasifikasi manual dengan memasukkan vektor data baru dengan nilai (6.7, 3.1, 4.4, 1.4) ke dalam setiap fungsi linear yang telah dibuat sebelumnya, nilai tertinggi yang diperoleh dari setiap fungsi linear (model) menunjukkan bahwa data baru tersebut termasuk Species 'versicolor'. Ditunjukkan dengan nilai fungsi linear sebesar 82.70, yang merupakan nilai tertinggi di antara ketiga fungsi linear
+
+### Klasifikasi/Prediksi Otomatis
+
+#### Kode
+```{r}
+  predicted<-predict(object = linearDA, newdata = test_data)
+  table(actual=test_data$Species,predicted=predicted$class)
+```
+#### Analisis
+Berdasarkan hasil prediksi menggunakan data test, diketahui bahwa model hanya melakukan satu kali kesalahan prediksi. Kesalahan tersebut terjadi pada Species 'versicolor' yang seharusnya diklasifikasikan sebagai 'virginica'. Sehingga dapat disimpulkan, model yang didapat memiliki keakuratan sebesar 0.97 (jumlah prediksi & aktual benar / jumlah data). Namun, meskipun memiliki tingkat keakuratan yang tinggi, data yang digunakan tidak berdistribusi normal dan matriks kovariannya berbeda, sehingga akurasinya mungkin tidak sepenuhnya akurat
+
+## Data Visualization
+#### Kode
+```{r}
+  partimat(Species~., data=train_data, method="lda")
+```
+#### Analisis
+Berdasarkan partition plot di atas, diketahui pembagian wilayah beserta tingkat error rate untuk setiap spesies berdasarkan dua variabel prediktor. Tingkat kesalahan tersebut adalah sebagai berikut:
+
+- Variabel Sepal.Length dengan Sepal.Width memiliki error rate: 0.196
+- Variabel Sepal.Length dengan Petal.Width memiliki error rate: 0.045
+- Variabel Sepal.Length dengan Petal.Length memiliki error rate: 0.036
+- Variabel Sepal.Width dengan Petal.Width memiliki error rate: 0.045
+- Variabel Sepal.Width dengan Petal.Length memiliki error rate: 0.054
+- Variabel Petal.Length dengan Petal.Width memiliki error rate: 0.045
+
+## Model Evaluation
+
+### Membandingkan dengan Quadratic Discriminant Analysis
+
+#### Kode
+```{r}
+  quadraticDA<-qda(formula= Species ~., data = train_data)
+  quadraticDA
+```
+#### Analisis
+Berdasarkan hasil di atas, model Quadratic Discriminant Analysis (QDA) menggunakan data train, menghasilkan probabilitas Spesies yang sama dengan model Linear Discriminant Analysis (LDA)
+
+
+#### Kode
+```{r}
+  predicted<-predict(object=quadraticDA,newdata = test_data)
+  table(actual=test_data$Species,predicted= predicted$class)
+```
+#### Analisis
+Berdasarkan hasil prediksi di atas, model Quadratic Discriminant Analysis (QDA) tidak hanya menghasilkan probabilitas Spesies yang sama dengan model Linear Discriminant Analysis (LDA), tetapi juga memiliki prediksi dan tingkat akurasi yang sama. Perlu diingat kembali, bahwa data tidak berdistribusi normal. Oleh karena itu, penggunaan dan perbandingan dengan metode lain seperti Regresi Logistik Multinomial dapat dilakukan untuk mendapatkan hasil yang lebih optimal
+
+# Percobaan ke-2: Studi Kasus 2
+
+## Import Library
+#### Kode
+```{r}
+  library(DT)
+  library(MVN)
+  library(MASS)
+  library(biotools)
+  library(dplyr)
+  library(klaR)
+```
+
+## Read Dataset
+#### Kode
+```{r}
+  warna <- read.csv('data_RGB.csv', sep=';')
+  warna
+```
+#### Analisis
+Berdasarkan tabel di atas, diketahui dataset warna memiliki 72 sampel dan 5 atribut yaitu 'Warna', 'R', 'G', 'B', dan 'Warna.Dasar'. Atribut 'Warna.Dasar' dijadikan variabel respon dengan jenis data berupa kategorikal nominal
+
+## Data Overview
+
+### Multivariate Normality
+#### Kode
+```{r}
+  mvn(data = warna[, c(2:4)], multivariatePlot = 'qq')
+```
+#### Analisis
+Berdasarkan hasil yang didapatkan, diketahui bahwa dataset tersebut tidak berdistribusi normal dikarenakan terjadi penolakan multivariate normality pada test 'Henze-Zirkler' dan 'Anderson-Darling' serta terdapat penyimpangan di jarak 5 pada garis lurus 'chi-square qq-plot'. Solusinya, dapat menggunakan Multinomial Logistic Regresion, menambahkan sampel, atau melakukan transformasi agar data berdistribusi normal
+
+### Matriks Kovarians Antar Variabel Respon (Warna Dasar)
+#### Kode
+```{r}
+  boxM(data=warna[, c(2:4)], grouping=warna[,5])
+```
+#### Analisis
+Berdasarkan nilai p-value sebesar 1.124e-06 pada Box M test dengan signifikansi 5% yang menunjukkan h0 diterima. Sehingga, dapat disimpulkan bahwa terdapat perbedaan pada matriks kovarians antar kategori 'Warna.Dasar'. Solusinya, dapat menggunakan Quadratic Discriminant Analysis
+
+### Uji Perbedaan Rata-Rata Antar Variabel Respon (Warna Dasar)
+#### Kode
+```{r}
+  m <- manova(formula=cbind(warna$R, warna$G, warna$B) ~ warna$Warna.Dasar)
+  summary(object = m, test = 'Wilks')
+```
+#### Analisis   
+Berdasarkan nilai p-value (2.2e-16) diatas, dapat disimpulkan bahwa terdapat perbedaan rata-rata (nilai variabel prediktor kecuali variabel 'Warna') antar variabel respon
+
+## Data Preprocessing
+
+#### Kode
+```{r}
+  warna <- warna[, -1]
+  warna
+```
+#### Analisis
+Berdasarkan hasil di atas, atribut "Warna" dihapuskan dari dataset karena bukan merupakan data numerik, sehingga tidak dapat digunakan sebagai variabel prediktor untuk variabel respons "Warna.Dasar"
+
+#### Kode
+```{r}
+  
+  warna[, 4] = as.factor(warna[, 4])
+  warna
+```
+#### Analisis
+Berdasarkan kode di atas, dilakukan pengubahan tipe data 'string' menjadi 'factor' (jenis data yang digunakan untuk data kategorikal)
+
+## Data Splitting
+#### Kode
+```{r}
+  set.seed(123)
+  train_index <- sample(seq(nrow(warna)), size = floor(0.75 * nrow(warna)), replace = F)
+  train_data <- warna[train_index, ]
+  test_data <- warna[-train_index, ]
+```
+#### Analisis
+Berdasarkan kode diatas, dilakukan pembagian data pada dataset dengan perbandingan 0.75 untuk data train dan 0.25 untuk data test
+
+## Data Processing
+
+### Membuat Model
+#### Kode
+```{r}
+  linearDA <- lda(formula=Warna.Dasar ~ ., data = train_data)
+  linearDA
+```
+#### Analisis
+Berdasarkan hasil di atas, model Linear Discriminant Analysis dengan menggunakan data train, memiliki probabilitas untuk tiap variabel prediktor (Warna.Dasar) sebagai berikut:
+
+- 'Coklat' dengan probabilitas 0.24
+- 'Hijau' dengan probabilitas 0.30
+- 'Merah' dengan probabilitas 0.22
+- 'Ungu' dengan probabilitas 0.24
+
+### Variabel Yang Berpengaruh
+
+#### Kode
+```{r}
+  plot(linearDA, col = as.integer(train_data$Warna.Dasar))
+```
+#### Analisis
+Berdasarkan grafik diatas, dapat diketahui sebaran data antar proportion of trace (LD)
+
+### Linear Score
+
+- Warna Dasar Coklat
+
+#### Kode
+```{r}
+  coklat <- train_data %>% 
+    filter(grepl('Coklat', Warna.Dasar))
+  coklat_mean <- sapply(coklat[, -4], mean)
+  coklat_mean
+```
+#### Analisis
+Berdasarkan hasil di atas, rata-rata vektor untuk setiap variabel prediktor pada variabel respon 'Coklat' adalah:
+
+  - 'R': 204.31
+  - 'G': 147.85
+  - 'B': 95.38
+  
+#### Kode
+```{r}
+  coklat_cov <- cov(coklat[, -4])
+  coklat_cov
+```
+#### Analisis
+Berdasarkan hasil di atas, didapatkan matriks kovarians dengan dimensi 3 x 3 antar variabel prediktor pada variabel respon 'coklat'. Seluruh nilai dalam matriks tersebut di bawah 5221
+
+- Warna Dasar Hijau
+
+#### Kode
+```{r}
+  hijau <- train_data %>%
+   filter(grepl('Hijau', Warna.Dasar))
+  hijau_mean <- sapply(hijau[, -4], mean)
+  hijau_mean
+```
+#### Analisis
+Berdasarkan hasil di atas, rata-rata vektor untuk setiap variabel prediktor pada variabel respon 'Hijau' adalah:
+
+  - 'R': 71.25
+  - 'G': 199.25
+  - 'B': 93.06
+  
+#### Kode
+```{r}
+  hijau_cov <- cov(hijau[, -4])
+  hijau_cov
+```
+#### Analisis
+Berdasarkan hasil di atas, didapatkan matriks kovarians dengan dimensi 3 x 3 antar variabel prediktor pada variabel respon 'Hijau'. Seluruh nilai dalam matriks tersebut di bawah 3458
+
+- Warna Dasar Merah
+
+#### Kode
+```{r}
+  merah <- train_data %>%
+   filter(grepl('Merah', Warna.Dasar))
+  merah_mean <- sapply(merah[, -4], mean)
+  merah_mean
+```
+#### Analisis
+Berdasarkan hasil di atas, rata-rata vektor untuk setiap variabel prediktor pada variabel respon 'Merah' adalah:
+
+  - 'R': 222.92
+  - 'G': 73.67
+  - 'B': 103.83
+  
+#### Kode
+```{r}
+  merah_cov <- cov(merah[, -4])
+  merah_cov
+```
+#### Analisis
+Berdasarkan hasil di atas, didapatkan matriks kovarians dengan dimensi 3 x 3 antar variabel prediktor pada variabel respon 'Merah'. Seluruh nilai dalam matriks tersebut di bawah 4512
+
+- Warna Dasar Ungu
+
+#### Kode
+```{r}
+  ungu <- train_data %>%
+   filter(grepl('Ungu', Warna.Dasar))
+  ungu_mean <- sapply(ungu[, -4], mean)
+  ungu_mean
+```
+#### Analisis
+Berdasarkan hasil di atas, rata-rata vektor untuk setiap variabel prediktor pada variabel respon 'Ungu' adalah:
+
+  - 'R': 159.62
+  - 'G': 62.31
+  - 'B': 194.08
+  
+#### Kode
+```{r}
+  ungu_cov <- cov(ungu[, -4])
+  ungu_cov
+```
+#### Analisis
+Berdasarkan hasil di atas, didapatkan matriks kovarians dengan dimensi 3 x 3 antar variabel prediktor pada variabel respon 'Ungu'. Seluruh nilai dalam matriks tersebut di bawah 4326
+
+- S-Pooled (Matriks Kovarians Gabungan)
+
+#### Kode
+```{r}
+  Spooled <- (9 * coklat_cov + 9 * hijau_cov + 9 * merah_cov + 9 * ungu_cov) / (9+9+9+9)
+  Spooled
+```
+#### Analisis
+Berdasarkan hasil di atas, diketahui nilai dalam matriks kovarians gabungan (S-Pooled). Semua nilai dalam matriks tersebut di bawah 3857
+
+- Fungsi Linear untuk Warna Dasar Coklat
+
+#### Kode
+```{r}
+  cb0=-0.5*t(coklat_mean)%*%solve(Spooled) %*% coklat_mean
+  cb1=t(coklat_mean) %*% solve(Spooled)
+  cb0
+  cb1
+```
+#### Analisis
+Berdasarkan hasil di atas, diperoleh nilai koefisien untuk respon 'Coklat' sebagai berikut:
+  
+  - Intercept (B0): -8.86
+  - R (B1): 0.082
+  - G (B2): 0.014
+  - B (B3): -0.010
+
+- Fungsi Linear untuk Warna Dasar Hijau
+
+#### Kode
+```{r}
+  hb0=-0.5*t(hijau_mean)%*%solve(Spooled)%*%hijau_mean
+  hb1=t(hijau_mean) %*% solve(Spooled)
+  hb0
+  hb1
+```
+#### Analisis
+Berdasarkan hasil di atas, diperoleh nilai koefisien untuk respon 'Hijau' sebagai berikut:
+  
+  - Intercept (B0): -5.15
+  - R (B1): 0.00027
+  - G (B2): 0.053
+  - B (B3): -0.003
+
+- Fungsi Linear untuk Warna Dasar Merah
+
+#### Kode
+```{r}
+  mb0=-0.5*t(merah_mean)%*%solve(Spooled)%*%merah_mean
+  mb1=t(merah_mean) %*% solve(Spooled)
+  mb0
+  mb1
+```
+#### Analisis
+Berdasarkan hasil di atas, diperoleh nilai koefisien untuk respon 'Merah' sebagai berikut:
+  
+  - Intercept (B0): -10.72
+  - R (B1): 0.102
+  - G (B2): -0.019
+  - B (B3): 0.002
+
+- Fungsi Linear untuk Warna Dasar Ungu
+
+#### Kode
+```{r}
+  ub0=-0.5*t(ungu_mean)%*%solve(Spooled)%*%ungu_mean
+  ub1=t(ungu_mean) %*% solve(Spooled)
+  ub0
+  ub1
+```
+#### Analisis
+Berdasarkan hasil di atas, diperoleh nilai koefisien untuk respon 'Ungu' sebagai berikut:
+  
+  - Intercept (B0): -8.09
+  - R (B1): 0.057
+  - G (B2): -0.028
+  - B (B3): 0.045
+  
+  
+### Klasifikasi/Prediksi Manual
+
+#### Kode
+```{r}
+  X1<-c(70, 130, 180)
+  DL_c = cb0 + cb1[1]*X1[1] + cb1[2]*X1[2] + cb1[3]*X1[3] + log(0.24)
+  DL_h = hb0 + hb1[1]*X1[1] + hb1[2]*X1[2] + hb1[3]*X1[3] + log(0.30)
+  DL_m = vb0 + mb1[1]*X1[1] + mb1[2]*X1[2] + mb1[3]*X1[3] + log(0.22)
+  DL_u = vb0 + ub1[1]*X1[1] + ub1[2]*X1[2] + ub1[3]*X1[3] + log(0.24)
+  maks=DL_c
+  if (DL_h>maks) maks=DL_h
+  if (DL_m>maks) maks=DL_m
+  if (DL_u>maks) maks=DL_u
+  maks
+  if(maks==DL_c){
+    print("X1 adalah Coklat")
+  } else if (maks==DL_h){
+    print("X1 adalah Hijau")
+  } else if (maks==DL_m) {
+    print("X1 adalah Merah")
+  } else {
+    print("X1 adalah Ungu")
+  }
+```
+#### Analisis
+Berdasarkan klasifikasi manual dengan memasukkan vektor data baru (Seafoam Green) dengan nilai (70, 130, 180) ke dalam setiap fungsi linear yang telah dibuat, nilai tertinggi yang diperoleh dari setiap fungsi linear (model) menunjukkan bahwa data baru tersebut termasuk Warna Dasar 'Hijau'. Hal itu, ditunjukkan dengan nilai fungsi linear sebesar -0.031, yang merupakan nilai tertinggi di antara keempat fungsi linear
+
+#### Kode
+```{r}
+  X1<-c(102, 45, 140)
+  DL_c = cb0 + cb1[1]*X1[1] + cb1[2]*X1[2] + cb1[3]*X1[3] + log(0.24)
+  DL_h = hb0 + hb1[1]*X1[1] + hb1[2]*X1[2] + hb1[3]*X1[3] + log(0.30)
+  DL_m = vb0 + mb1[1]*X1[1] + mb1[2]*X1[2] + mb1[3]*X1[3] + log(0.22)
+  DL_u = vb0 + ub1[1]*X1[1] + ub1[2]*X1[2] + ub1[3]*X1[3] + log(0.24)
+  maks=DL_c
+  if (DL_h>maks) maks=DL_h
+  if (DL_m>maks) maks=DL_m
+  if (DL_u>maks) maks=DL_u
+  maks
+  if(maks==DL_c){
+    print("X1 adalah Coklat")
+  } else if (maks==DL_h){
+    print("X1 adalah Hijau")
+  } else if (maks==DL_m) {
+    print("X1 adalah Merah")
+  } else {
+    print("X1 adalah Ungu")
+  }
+```
+#### Analisis
+Berdasarkan klasifikasi manual dengan memasukkan vektor data baru (Royal Purple) dengan nilai (102, 45, 140) ke dalam setiap fungsi linear yang telah dibuat, nilai tertinggi yang diperoleh dari setiap fungsi linear (model) menunjukkan bahwa data baru tersebut termasuk Warna Dasar 'Ungu'. Hal itu, ditunjukkan dengan nilai fungsi linear sebesar 1.40, yang merupakan nilai tertinggi di antara keempat fungsi linear
+
+### Klasifikasi/Prediksi Otomatis
+
+#### Kode
+```{r}
+  predicted<-predict(object = linearDA, newdata = test_data)
+  table(actual=test_data$Warna.Dasar,predicted=predicted$class)
+```
+#### Analisis
+Berdasarkan hasil prediksi pada data test, model menghasilkan 6 prediksi yang salah. Oleh karena itu, dapat disimpulkan bahwa model memiliki keakuratan sebesar 0.67 (jumlah prediksi benar / total data). Rendahnya tingkat akurasi ini kemungkinan tertinggi disebabkan pemilihan metode yang kurang tepat, yaitu Linear Discriminant Analysis (LDA). Hal ini didukung oleh fakta bahwa data yang digunakan tidak berdistribusi normal dan terdapat perbedaan pada matriks kovariansnya. LDA memerlukan data berdistribusi normal dan matriks kovarians sama agar menghasilkan prediksi yang akurat/tepat. Solusinya, dapat menggunakan metode Quadratic Discriminant Analysis atau Regresi Logistik Multinomial
+
+## Data Visualization
+#### Kode
+```{r}
+  partimat(Warna.Dasar~., data=train_data, method="lda")
+```
+#### Analisis
+Berdasarkan partition plot di atas, diketahui pembagian wilayah beserta tingkat error rate untuk setiap 'Warna.Dasar' berdasarkan dua variabel prediktor. Tingkat kesalahan tersebut adalah sebagai berikut:
+
+- Variabel R dengan G memiliki error rate: 0.204
+- Variabel R dengan B memiliki error rate: 0.315
+- Variabel G dengan B memiliki error rate: 0.352
+
+## Model Evaluation
+
+### Membandingkan dengan Quadratic Discriminant Analysis
+
+#### Kode
+```{r}
+  quadraticDA<-qda(formula= Warna.Dasar ~., data = train_data)
+  quadraticDA
+```
+#### Analisis
+Berdasarkan hasil di atas, model Quadratic Discriminant Analysis (QDA) menggunakan data train, menghasilkan probabilitas 'Warna.Dasar' yang sama dengan model Linear Discriminant Analysis (LDA)
+
+
+#### Kode
+```{r}
+  predicted<-predict(object=quadraticDA,newdata = test_data)
+  table(actual=test_data$Warna.Dasar,predicted= predicted$class)
+```
+#### Analisis
+Berdasarkan hasil prediksi di atas, walaupun model Quadratic Discriminant Analysis (QDA) menghasilkan probabilitas 'Warna.Dasar' yang sama dengan Linear Discriminant Analysis (LDA), QDA menghasilkan prediksi yang lebih baik dengan tingkat akurasi sebesar 0,97 (jumlah prediksi benar / total data). Selain itu, dapat dilakukan penggunaan dan perbandingan dengan metode Regresi Logistik Multinomial untuk mendapatkan hasil yang lebih optimal. mengingat data yang digunakan tidak berdistribusi normal

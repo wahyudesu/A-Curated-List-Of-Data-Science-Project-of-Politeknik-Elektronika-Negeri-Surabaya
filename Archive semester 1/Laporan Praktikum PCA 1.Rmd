@@ -1,0 +1,402 @@
+---
+title: "Laporan Praktikum  PCA 1"
+author: "Alvinnova Rahmadana Diputra"
+output:
+  word_document: default
+  pdf_document: default
+---
+
+#3. Percobaan
+
+3.1 Percobaan ke-1
+
+```{r}
+#Hitung PCA
+library(DT) #Menampilkan tabel agar mudah dilihat di browser
+library(factoextra) #Visualisasi 
+PCAdf <- read.csv("D:/data_pca.csv") #read datasetdf
+#menampilkan dataset
+PCAdf
+```
+```{r}
+#Standarisasi dataset
+sdf<- scale(x = PCAdf)
+sdf
+```
+
+Standardisasi dataset PCAdf menghasilkan dataset baru sdf dengan distribusi yang terpusat pada mean 0 dan diskalakan dengan standar deviasi 1 untuk setiap kolom. Hal ini membantu dalam membandingkan data dari kolom yang berbeda dan meningkatkan performa algoritma machine learning.
+
+```{r}
+#Hitung matriks kovarians (ragam-peragam)
+kov <- cov(sdf)
+kov
+```
+
+Hasil matriks kovarians menunjukkan bahwa terdapat hubungan yang kuat antara variabel-variabel dalam dataset sdf
+- X1 dan X2 memiliki hubungan negatif yang kuat (kovarians -0.9933993).
+- X1 dan X3 memiliki hubungan positif yang kuat (kovarians 0.9773756).
+- X2 dan X3 memiliki hubungan negatif yang kuat (kovarians -0.9838699).
+
+```{r}
+#Hitung vektor eigen dan nilai eigen
+vn_eigen <- eigen(kov)
+vn_eigen
+```
+
+- Nilai eigen pertama (2.969777889) menunjukkan bahwa komponen utama pertama menjelaskan 296.98% dari varians data.
+- Nilai eigen kedua (0.024415078) menunjukkan bahwa komponen utama kedua hanya menjelaskan 2.44% dari varians data.
+- Nilai eigen ketiga (0.005807033) menunjukkan bahwa komponen utama ketiga hanya menjelaskan 0.58% dari varians data.
+
+Hasil vektor dan nilai eigen menunjukkan bahwa:
+- Komponen utama pertama menjelaskan sebagian besar varians data.
+- Komponen utama kedua dan ketiga menjelaskan sedikit varians data.
+- Vektor eigen menunjukkan arah dari masing-masing komponen utama.
+
+```{r}
+#PCA dengan fungsi prcomp
+pca <- prcomp(x = PCAdf, scale. = TRUE, center = TRUE) 
+names(pca)
+```
+
+Hasil PCA menunjukkan bahwa:
+- Principal component pertama menjelaskan sebagian besar variabilitas dalam data.
+- Principal component kedua dan seterusnya menjelaskan semakin sedikit variabilitas.
+
+```{r}
+#nilai standar deviasi dari komponen utama
+pca$sdev
+```
+
+- Komponen utama pertama memiliki standar deviasi 1.72330435, yang menunjukkan bahwa komponen ini menjelaskan 1.72330435^2 = 2.9698 variance dalam data.
+- Komponen utama kedua memiliki standar deviasi 0.15625325, yang menunjukkan bahwa komponen ini menjelaskan 0.15625325^2 = 0.0244 variance dalam data.
+- Komponen utama ketiga memiliki standar deviasi 0.07620389, yang menunjukkan bahwa komponen ini menjelaskan 0.07620389^2 = 0.0058 variance dalam data.
+
+Berdasarkan nilai standar deviasi, dapat disimpulkan bahwa:
+- Komponen utama pertama menjelaskan mayoritas variabilitas dalam data.
+- Komponen utama kedua dan ketiga menjelaskan variabilitas yang jauh lebih kecil.
+
+```{r}
+#nilai data setelah dimasukkan kedalam persamaan komponen utama (hasil transformasi)
+pca$x
+```
+
+Berdasarkan nilai-nilai tersebut, dapat disimpulkan bahwa data pertama memiliki pengaruh yang besar pada PC1, sedangkan pengaruhnya pada PC2 dan PC3 relatif kecil.
+
+```{r}
+#vektor eigen atau koefisien dari masing-masing variabel yang digunakan untukmembentuk komponen utama
+#nilai ini juga bisa disebut loadings.
+pca$rotation
+```
+
+Berdasarkan nilai-nilai tersebut, dapat disimpulkan bahwa:
+- Variabel X1 memiliki kontribusi positif yang sama pada PC1 dan PC3, dan kontribusi negatif pada PC2.
+- Variabel X2 memiliki kontribusi negatif pada PC1, kontribusi positif pada PC2, dan kontribusi positif yang besar pada PC3.
+- Variabel X3 memiliki kontribusi positif pada PC1 dan PC2, dan kontribusi positif yang kecil pada PC3.
+
+```{r}
+#menentukan jumlah komponen utama
+summary(pca)
+```
+
+- Berdasarkan output, terdapat 3 komponen utama.
+Komponen utama pertama memiliki standar deviasi 1.7233, yang menjelaskan 98.99% variabilitas dalam data.
+- Komponen utama kedua memiliki standar deviasi 0.15625, yang menjelaskan 0.814% variabilitas dalam data.
+- Komponen utama ketiga memiliki standar deviasi 0.07620, yang menjelaskan 0.194% variabilitas dalam data.
+
+Berdasarkan aturan Kaiser dan scree plot, dapat disimpulkan bahwa:
+- Jumlah komponen utama yang optimal adalah 1.
+- Komponen utama pertama menjelaskan mayoritas variabilitas dalam data, sehingga cukup untuk merepresentasikan data.
+
+```{r}
+#rekonstruksi data
+head(pca$x[,1:2])
+```
+
+Output menunjukkan bahwa data asli dapat direkonstruksi dengan cukup akurat menggunakan 2 komponen utama.
+
+```{r}
+#visualisasi data hasil rekonstruksi
+fviz_pca(pca)
+```
+
+Berdasarkan biplot, dapat disimpulkan bahwa:
+- PC1 adalah komponen utama yang paling penting dalam menjelaskan variabilitas data.
+- Data yang terletak di kuadran kanan atas memiliki hubungan yang kuat dan positif dengan variabel X1 dan X2.
+- Data yang terletak di kuadran kiri bawah memiliki hubungan yang kuat dan negatif dengan variabel X1 dan X2.
+- Variabel X1 dan X2 memiliki hubungan yang positif.
+
+3.2 Percobaan ke-2: Studi Kasus 1
+
+```{r}
+library(factoextra)
+data(decathlon2)
+decathlon2.active <- decathlon2[1:23, 1:10]
+head(decathlon2.active[, 1:6])
+```
+
+```{r}
+#Komputasi PCA
+res.pca <- prcomp(decathlon2.active, scale = TRUE)
+summary(res.pca)
+res.pca
+```
+
+- Analisis PCA berhasil meringkas data decathlon menjadi beberapa komponen utama yang menjelaskan sebagian besar varians.
+- Interpretasi komponen utama membantu dalam memahami struktur data dan hubungan antar variabel.
+
+```{r}
+#Visualize eigenvalues (scree plot). Show the percentage of variances explained by each principal component.
+fviz_eig(res.pca)
+```
+
+Pada scree plot ini, terdapat "siku" setelah PC3. Hal ini menunjukkan bahwa PC1, PC2, dan PC3 mungkin cukup untuk menjelaskan sebagian besar varians dalam data.PC4 dan seterusnya mungkin tidak signifikan dan dapat dihilangkan.
+
+```{r}
+#Graph of individuals. Individuals with a similar profile are grouped together.
+fviz_pca_ind(res.pca, col.ind = "cos2", # Color by the quality of representation
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             repel = TRUE # Avoid text overlapping
+             )
+```
+
+Terdapat beberapa kelompok atlet yang terlihat pada plot:
+- Kelompok di kuadran kanan atas memiliki skor PC1 dan PC2 yang tinggi, menunjukkan performa yang baik pada kedua komponen.
+- Kelompok di kuadran kiri bawah memiliki skor PC1 dan PC2 yang rendah, menunjukkan performa yang kurang baik pada kedua komponen.
+- Kelompok di kuadran kiri atas memiliki skor PC1 yang tinggi dan skor PC2 yang rendah, menunjukkan performa yang baik pada PC1 dan performa yang kurang baik pada PC2.
+- Kelompok di kuadran kanan bawah memiliki skor PC1 yang rendah dan skor PC2 yang tinggi, menunjukkan performa yang kurang baik pada PC1 dan performa yang baik pada PC2.
+
+```{r}
+#Graph of variables. Positive correlated variables point to the same side of the plot. Negative correlated variables point to opposite sides of the graph.
+fviz_pca_var(res.pca,
+             col.var = "contrib", # Color by contributions to the PC
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             repel = TRUE # Avoid text overlapping
+             )
+```
+
+Beberapa kelompok korelasi terlihat pada plot:
+- Kelompok kanan atas menunjukkan variabel yang berkorelasi positif dengan PC1 dan PC2, seperti X100m, Long Jump, dan High Jump. Ini mungkin mewakili "kemampuan atletik secara keseluruhan".
+- Kelompok kiri atas menunjukkan variabel yang berkorelasi positif dengan PC2 dan negatif dengan PC1, seperti Discus Throw dan Javelin Throw. Ini mungkin mewakili "kekuatan lemparan".
+- Kelompok kiri bawah menunjukkan variabel yang berkorelasi negatif dengan PC1 dan PC2, seperti X110m Hurdles dan Shot Put. Ini mungkin mewakili "teknik khusus".
+- Kelompok kanan bawah menunjukkan variabel yang berkorelasi negatif dengan PC2 dan positif dengan PC1, seperti X400m dan X1500m. Ini mungkin mewakili "stamina dan daya tahan".
+
+```{r}
+#Biplot of individuals and variables
+fviz_pca_biplot(res.pca, repel = TRUE,
+                col.var = "#2E9FDF", # Variables color
+                col.ind = "#696969" # Individuals color
+                )
+```
+
+- Atlet yang terletak dekat satu sama lain memiliki profil yang similar.
+- Atlet yang terletak di kuadran yang sama memiliki performa yang similar pada PC1 dan PC2.
+- Variabel yang vektornya saling berdekatan memiliki hubungan yang positif.
+- Variabel yang vektornya saling berjauhan memiliki hubungan yang negatif.
+- Variabel yang vektornya tegak lurus tidak memiliki hubungan.
+- Atlet yang terletak dekat dengan vektor variabel memiliki skor tinggi pada variabel tersebut.
+- Atlet yang terletak jauh dari vektor variabel memiliki skor rendah pada variabel tersebut.
+
+```{r}
+library(factoextra)
+# Eigenvalues
+eig.val <- get_eigenvalue(res.pca)
+eig.val
+ 
+# Results for Variables
+res.var <- get_pca_var(res.pca)
+res.var$coord # Coordinates
+res.var$contrib # Contributions to the PCs
+res.var$cos2 # Quality of representation 
+# Results for individuals
+res.ind <- get_pca_ind(res.pca)
+res.ind$coord # Coordinates
+res.ind$contrib # Contributions to the PCs
+res.ind$cos2 # Quality of representation
+```
+
+```{r}
+# Data for the supplementary individuals
+ind.sup <- decathlon2[24:27, 1:10]
+ind.sup[, 1:6]
+```
+
+```{r}
+ind.sup.coord <- predict(res.pca, newdata = ind.sup)
+ind.sup.coord[, 1:4]
+```
+
+Hasil prediksi menunjukkan bahwa KARPOV dan WARNERS memiliki performa yang lebih baik dibandingkan dengan Nool dan Drews. KARPOV memiliki skor PC1 dan PC3 yang tinggi, menunjukkan performa yang baik pada "kecepatan keseluruhan" dan "kekuatan keseluruhan". WARNERS memiliki skor PC1 dan PC3 yang positif, menunjukkan performa yang baik pada "kecepatan keseluruhan" dan "kekuatan keseluruhan". Nool memiliki skor PC1 yang negatif dan skor PC4 yang sangat negatif, menunjukkan performa yang kurang baik pada "kecepatan keseluruhan" dan "kemampuan atletik secara keseluruhan". Drews memiliki skor PC1 dan PC3 yang positif, menunjukkan performa yang baik pada "kecepatan keseluruhan" dan "kekuatan keseluruhan".
+
+```{r}
+# Plot of active individuals
+p <- fviz_pca_ind(res.pca, repel = TRUE)
+# Add supplementary individuals
+fviz_add(p, ind.sup.coord, color ="red")
+```
+
+- KARPOV terletak di kuadran kanan atas, menunjukkan performa yang baik pada "kecepatan keseluruhan" dan "kekuatan keseluruhan".
+- WARNERS terletak di kuadran kanan atas, menunjukkan performa yang baik pada "kecepatan keseluruhan" dan "kekuatan keseluruhan".
+- Nool terletak di kuadran kiri bawah, menunjukkan performa yang kurang baik pada "kecepatan keseluruhan" dan "kemampuan atletik secara keseluruhan".
+- Drews terletak di kuadran kanan atas, menunjukkan performa yang baik pada "kecepatan keseluruhan" dan "kekuatan keseluruhan".
+
+```{r}
+# Centering and scaling the supplementary individuals
+ind.scaled <- scale(ind.sup, 
+                    center = res.pca$center,
+                    scale = res.pca$scale)
+# Coordinates of the individividuals
+coord_func <- function(ind, loadings){
+  r <- loadings*ind
+  apply(r, 2, sum)
+  }
+pca.loadings <- res.pca$rotation
+ind.sup.coord <- t(apply(ind.scaled, 1, coord_func, pca.loadings ))
+ind.sup.coord[, 1:4]
+
+```
+
+Tabel menunjukkan skor individu tambahan pada masing-masing komponen utama. Nilai yang lebih tinggi menunjukkan kontribusi yang lebih besar terhadap komponen tersebut. Nilai positif menunjukkan hubungan positif dengan komponen, sedangkan nilai negatif menunjukkan hubungan negatif.
+
+```{r}
+groups <- as.factor(decathlon2$Competition[1:23])
+fviz_pca_ind(res.pca,
+             col.ind = groups, # color by groups
+             palette = c("#00AFBB", "#FC4E07"),
+             addEllipses = TRUE, # Concentration ellipses
+             ellipse.type = "confidence",
+             legend.title = "Groups",
+             repel = TRUE
+             )
+```
+
+- Kelompok di kuadran kanan atas memiliki skor PC1 dan PC2 yang tinggi, menunjukkan performa yang baik pada kedua komponen.
+- Kelompok di kuadran kiri bawah memiliki skor PC1 dan PC2 yang rendah, menunjukkan performa yang kurang baik pada kedua komponen.
+- Kelompok di kuadran kiri atas memiliki skor PC1 yang tinggi dan skor PC2 yang rendah, menunjukkan performa yang baik pada PC1 dan performa yang kurang baik pada PC2.
+- Kelompok di kuadran kanan bawah memiliki skor PC1 yang rendah dan skor PC2 yang tinggi, menunjukkan performa yang kurang baik pada PC1 dan performa yang baik pada PC2.
+
+Plot individu berdasarkan grup menunjukkan bahwa terdapat beberapa kelompok atlet dengan profil yang similar. Elips konsentrasi membantu dalam visualisasi variabilitas dan perbedaan antar grup.
+
+```{r}
+library(magrittr) # for pipe %>%
+library(dplyr) # everything else
+# 1. Individual coordinates
+res.ind <- get_pca_ind(res.pca)
+# 2. Coordinate of groups
+coord.groups <- res.ind$coord %>%
+  as_data_frame() %>%
+  select(Dim.1, Dim.2) %>%
+  mutate(competition = groups) %>%
+  group_by(competition) %>%
+  summarise(
+    Dim.1 = mean(Dim.1),
+    Dim.2 = mean(Dim.2)
+    )
+coord.groups
+```
+
+Berdasarkan output, grup "OlympicG" memiliki centroid di posisi (1.204428, 0.1092046). Ini menunjukkan bahwa rata-rata atlet dalam grup tersebut memiliki skor tinggi pada komponen utama 1 dan skor sedikit di atas rata-rata pada komponen utama 2. Hal ini mungkin mengindikasikan bahwa atlet dalam grup "OlympicG" unggul dalam aspek yang diwakili oleh komponen utama 1.
+
+```{r}
+quanti.sup <- decathlon2[1:23, 11:12, drop = FALSE]
+head(quanti.sup)
+```
+
+```{r}
+# Predict coordinates and compute cos2
+quanti.coord <- cor(quanti.sup, res.pca$x)
+quanti.cos2 <- quanti.coord^2
+# Graph of variables including supplementary variables
+p <- fviz_pca_var(res.pca)
+fviz_add(p, quanti.coord, color ="blue", geom="arrow")
+```
+
+- Panjang dan arah panah menunjukkan kekuatan dan arah hubungan antara variabel tambahan dan komponen utama.
+- Panah yang panjang menunjukkan hubungan yang kuat.
+- Panah yang dekat dengan sumbu x atau y menunjukkan hubungan yang lemah.
+Sudut antara panah menunjukkan hubungan antar variabel.
+
+```{r}
+# Helper function 
+#::::::::::::::::::::::::::::::::::::::::
+var_coord_func <- function(loadings, comp.sdev){
+  loadings*comp.sdev
+  }
+# Compute Coordinates
+#::::::::::::::::::::::::::::::::::::::::
+loadings <- res.pca$rotation
+sdev <- res.pca$sdev
+var.coord <- t(apply(loadings, 1, var_coord_func, sdev)) 
+head(var.coord[, 1:4])
+```
+
+- Koordinat: Nilai-nilai pada tabel menunjukkan posisi setiap variabel dalam ruang komponen utama.
+- Nilai Positif vs. Negatif: Nilai positif menunjukkan hubungan positif dengan komponen utama, sedangkan nilai negatif menunjukkan hubungan negatif.
+- Nilai Mutlak: Semakin besar nilai absolut, semakin kuat hubungan variabel dengan komponen utama.
+
+```{r}
+# Compute Cos2
+#::::::::::::::::::::::::::::::::::::::::
+var.cos2 <- var.coord^2
+head(var.cos2[, 1:4])
+```
+
+- Nilai cos^2 mendekati 1 menunjukkan bahwa variabel tersebut dijelaskan dengan baik oleh komponen utama.
+- Nilai cos^2 mendekati 0 menunjukkan bahwa variabel tersebut tidak dijelaskan dengan baik oleh komponen utama.
+
+```{r}
+# Compute contributions
+#::::::::::::::::::::::::::::::::::::::::
+comp.cos2 <- apply(var.cos2, 2, sum)
+contrib <- function(var.cos2, comp.cos2){var.cos2*100/comp.cos2}
+var.contrib <- t(apply(var.cos2,1, contrib, comp.cos2))
+head(var.contrib[, 1:4])
+```
+
+- Nilai menunjukkan persentase varians dalam PC yang dijelaskan oleh masing-masing variabel.
+- Nilai yang lebih tinggi menunjukkan kontribusi yang lebih besar.
+
+```{r}
+# Coordinates of individuals
+#::::::::::::::::::::::::::::::::::
+ind.coord <- res.pca$x
+head(ind.coord[, 1:4])
+```
+
+- Atlet dengan skor tinggi pada PC1 umumnya memiliki performa yang baik secara keseluruhan.
+- Atlet dengan skor rendah pada PC1 umumnya memiliki performa yang kurang baik secara keseluruhan.
+- Posisi pada PC2, PC3, dan seterusnya menunjukkan kekuatan dan kelemahan spesifik pada aspek yang diwakili oleh PC tersebut.
+
+```{r}
+# Cos2 of individuals
+#:::::::::::::::::::::::::::::::::
+# 1. square of the distance between an individual and the
+# PCA center of gravity
+center <- res.pca$center
+scale<- res.pca$scale
+getdistance <- function(ind_row, center, scale){
+  return(sum(((ind_row-center)/scale)^2))
+  }
+d2 <- apply(decathlon2.active,1,getdistance, center, scale)
+# 2. Compute the cos2. The sum of each row is 1
+cos2 <- function(ind.coord, d2){return(ind.coord^2/d2)}
+ind.cos2 <- apply(ind.coord, 2, cos2, d2)
+head(ind.cos2[, 1:4])
+
+```
+
+- Nilai mendekati 1 menunjukkan bahwa sebagian besar varians individu dijelaskan oleh PC tersebut.
+- Nilai mendekati 0 menunjukkan bahwa PC tersebut tidak menjelaskan banyak varians individu.
+
+```{r}
+# Contributions of individuals
+#:::::::::::::::::::::::::::::::
+contrib <- function(ind.coord, comp.sdev, n.ind){
+  100*(1/n.ind)*ind.coord^2/comp.sdev^2
+  }
+ind.contrib <- t(apply(ind.coord, 1, contrib, 
+                       res.pca$sdev, nrow(ind.coord)))
+head(ind.contrib[, 1:4])
+```
+
+- Nilai menunjukkan persentase varians dalam PC yang dijelaskan oleh masing-masing atlet.
+- Nilai yang lebih tinggi menunjukkan kontribusi yang lebih besar.

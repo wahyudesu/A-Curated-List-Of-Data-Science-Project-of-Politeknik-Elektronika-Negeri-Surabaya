@@ -1,0 +1,116 @@
+---
+title: "Percobaan ke-1 dan 2 dengan Studi Kasus 1 dan 2"
+author: "Vana Prastha Sulthon Naillendra Agung"
+date: "`r Sys.Date()`"
+output: word_document
+---
+
+```{r}
+#Analisis Faktor Kasus-1
+#1. Membaca Dataset dan menampilkan
+data = read.csv("E:/SEMESTER 2/PRAKTIKUM STATISTIKA TERAPAN/PERTEMUAN KE-2/DATASET/Exh_mvar.csv", header = TRUE)
+data
+
+```
+
+```{r}
+#2. Evaluasi Data
+#Deskripsi Statistik
+summary(data)
+```
+
+
+```{r}
+#Evaluasi Matriks Korelasi
+library(RcmdrMisc)
+rcorr.adjust(data) # Fungsi ini dibangun di R Commander.
+
+```
+
+```{r}
+write.csv(cor(data)>0.8,file="Suspect_Correlations.csv")
+write.csv(cor(data),file="Correlation_Values.csv")
+```
+
+```{r}
+#Uji KMO untuk kecukupan sampel,KMO > 0.5 maka sampel cukup
+library(psych)
+KMO(data)
+```
+
+
+```{r}
+round( KMO(data)$MSA, 2 )
+```
+
+```{r}
+#Uji Bartlett untuk menguji ada tidaknya korelasi antarvariabel
+library(psych)
+cortest.bartlett(data)
+
+
+```
+
+
+```{r}
+#2. Menentukan jumlah faktor yang diekstraksi
+ev <- eigen(cor(data)) # mendapatkan nilai eigen
+ev$values
+```
+
+
+```{r}
+#Scree plot
+png(file = "scree fa1.png")
+scree(data, pc=FALSE)
+dev.off()
+
+```
+
+
+```{r}
+#Cek analisis secara paralel
+png(file = "scree fa1_paralel.png")
+fa.parallel(data, fa="fa")
+dev.off()
+
+```
+
+
+```{r}
+#3. Ekstrak dan rotasi Faktor
+Nfacs <- 2 # Misal kita menentukan 3 faktor
+fit <- factanal(data, Nfacs, rotation="varimax")
+print(fit, digits=2, cutoff=0.3, sort=TRUE)
+
+```
+
+
+```{r}
+#Plot Faktor 1 dan Faktor 2 (Biplot)
+png(file = "BiplotFak.png")
+load <- fit$loadings[,1:2]
+plot(load,type="n") # set up plot
+text(load,labels=names(data),cex=.7)
+dev.off()
+
+```
+
+
+
+```{r}
+library(psych)
+png(file = "Visual_fa1")
+loads <- fit$loadings
+fa.diagram(loads)
+dev.off()
+
+```
+
+
+
+```{r}
+#Menyimpan hasil
+FactorLoadings <- round(fit$loadings[1:5, ], 2)
+write.csv(FactorLoadings, file="FacLoads.csv")
+```
