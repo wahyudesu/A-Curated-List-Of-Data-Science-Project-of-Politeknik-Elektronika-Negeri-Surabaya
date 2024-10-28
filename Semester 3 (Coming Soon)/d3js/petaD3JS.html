@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Peta Indonesia dengan D3.js</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        .province {
+            fill: #cce5ff;
+            stroke: #007bff;
+            stroke-width: 0.5px;
+        }
+
+        .province:hover {
+            fill: #007bff;
+            cursor: pointer;
+        }
+
+        .label {
+            font-size: 12px;
+            font-family: Arial, sans-serif;
+            fill: #333;
+            text-anchor: middle;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Peta Indonesia dengan D3.js</h2>
+<svg width="800" height="600"></svg>
+
+<script>
+    // Ukuran dan pengaturan peta
+    const width = 800;
+    const height = 600;
+
+    // SVG untuk menggambar peta
+    const svg = d3.select("svg")
+                  .attr("width", width)
+                  .attr("height", height);
+
+    // Proyeksi peta
+    const projection = d3.geoMercator()
+                         .center([120, -3])  // Koordinat pusat peta Indonesia
+                         .scale(1000)        // Skala untuk memperbesar peta
+                         .translate([width / 2, height / 2]);
+
+    const path = d3.geoPath().projection(projection);
+
+    // Memuat data GeoJSON peta Indonesia
+    d3.json("indonesia-prov.geojson").then(data => {
+        // Menggambar setiap provinsi
+        svg.selectAll("path")
+           .data(data.features)
+           .join("path")
+           .attr("class", "province")
+           .attr("d", path)
+           .on("mouseover", function(event, d) {
+               d3.select(this).attr("fill", "#007bff");
+           })
+           .on("mouseout", function(event, d) {
+               d3.select(this).attr("fill", "#cce5ff");
+           });
+
+        // Menambahkan label untuk setiap provinsi (opsional)
+        svg.selectAll("text")
+           .data(data.features)
+           .join("text")
+           .attr("class", "label")
+           .attr("transform", d => `translate(${path.centroid(d)})`)
+           .attr("dy", "0.35em")
+           .text(d => d.properties.NAME_1);
+    });
+</script>
+
+</body>
+</html>

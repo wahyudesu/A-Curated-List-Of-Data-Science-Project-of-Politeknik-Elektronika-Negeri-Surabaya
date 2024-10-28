@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scatter Plot dengan D3.js</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        .dot {
+            fill: steelblue;
+            stroke: white;
+            stroke-width: 1.5px;
+        }
+
+        .axis-label {
+            font-size: 12px;
+            font-family: Arial, sans-serif;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Contoh Scatter Plot dengan D3.js</h2>
+<svg width="600" height="400"></svg>
+
+<script>
+    // Data untuk scatter plot
+    const data = [
+        {x: 5, y: 20},
+        {x: 15, y: 35},
+        {x: 25, y: 10},
+        {x: 35, y: 50},
+        {x: 45, y: 40},
+        {x: 55, y: 30},
+        {x: 65, y: 60},
+        {x: 75, y: 20},
+        {x: 85, y: 80},
+        {x: 95, y: 45}
+    ];
+
+    // Ukuran dan margin grafik
+    const width = 600;
+    const height = 400;
+    const margin = { top: 20, right: 30, bottom: 50, left: 50 };
+
+    // Skala untuk sumbu X dan Y
+    const x = d3.scaleLinear()
+                .domain([0, d3.max(data, d => d.x) + 10])  // domain data dengan margin 10
+                .range([margin.left, width - margin.right]);
+
+    const y = d3.scaleLinear()
+                .domain([0, d3.max(data, d => d.y) + 10])  // domain data dengan margin 10
+                .range([height - margin.bottom, margin.top]);
+
+    // SVG tempat menggambar grafik
+    const svg = d3.select("svg")
+                  .attr("width", width)
+                  .attr("height", height);
+
+    // Menambahkan titik untuk setiap data
+    svg.selectAll("circle")
+       .data(data)
+       .join("circle")
+       .attr("class", "dot")
+       .attr("cx", d => x(d.x))
+       .attr("cy", d => y(d.y))
+       .attr("r", 5);
+
+    // Menambahkan sumbu X
+    svg.append("g")
+       .attr("transform", `translate(0,${height - margin.bottom})`)
+       .call(d3.axisBottom(x))
+       .append("text")
+       .attr("x", width / 2)
+       .attr("y", 40)
+       .attr("class", "axis-label")
+       .text("X Axis Label");
+
+    // Menambahkan sumbu Y
+    svg.append("g")
+       .attr("transform", `translate(${margin.left},0)`)
+       .call(d3.axisLeft(y))
+       .append("text")
+       .attr("x", -height / 2)
+       .attr("y", -40)
+       .attr("transform", "rotate(-90)")
+       .attr("class", "axis-label")
+       .text("Y Axis Label");
+</script>
+
+</body>
+</html>

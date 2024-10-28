@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pie Chart dengan Legend menggunakan D3.js</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        .label {
+            font-size: 12px;
+            font-weight: bold;
+            fill: #333;
+        }
+
+        .legend {
+            font-size: 12px;
+            font-family: Arial, sans-serif;
+        }
+
+        .legend-color {
+            width: 15px;
+            height: 15px;
+            margin-right: 5px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Contoh Grafik Lingkaran (Pie Chart) dengan Legend menggunakan D3.js</h2>
+<svg width="600" height="500"></svg>
+
+<script>
+    // Data untuk pie chart
+    const data = [
+        {label: "A", value: 30},
+        {label: "B", value: 70},
+        {label: "C", value: 45},
+        {label: "D", value: 65},
+        {label: "E", value: 20},
+        {label: "F", value: 85}
+    ];
+
+    // Ukuran dan radius
+    const width = 600;
+    const height = 500;
+    const radius = Math.min(width, height) / 2 - 50;
+
+    // Skala warna untuk setiap bagian grafik
+    const color = d3.scaleOrdinal()
+                    .domain(data.map(d => d.label))
+                    .range(d3.schemeCategory10);
+
+    // SVG tempat menggambar grafik
+    const svg = d3.select("svg")
+                  .attr("width", width)
+                  .attr("height", height)
+                  .append("g")
+                  .attr("transform", `translate(${width / 2 - 100},${height / 2})`);
+
+    // Fungsi untuk layout pie
+    const pie = d3.pie()
+                  .value(d => d.value)
+                  .sort(null);
+
+    // Fungsi untuk mengatur bentuk slice
+    const arc = d3.arc()
+                  .innerRadius(0)
+                  .outerRadius(radius);
+
+    // Menambahkan slice berdasarkan data
+    svg.selectAll("path")
+       .data(pie(data))
+       .join("path")
+       .attr("d", arc)
+       .attr("fill", d => color(d.data.label))
+       .attr("stroke", "white")
+       .attr("stroke-width", 2);
+
+    // Menambahkan label di dalam slice
+    svg.selectAll("text")
+       .data(pie(data))
+       .join("text")
+       .attr("transform", d => `translate(${arc.centroid(d)})`)
+       .attr("dy", "0.35em")
+       .attr("text-anchor", "middle")
+       .attr("class", "label")
+       .text(d => d.data.value);
+
+    // Menambahkan legend di sebelah kanan pie chart
+    const legend = svg.append("g")
+                      .attr("transform", `translate(${radius + 30}, ${-radius})`);
+
+    legend.selectAll("rect")
+          .data(data)
+          .join("rect")
+          .attr("class", "legend-color")
+          .attr("x", 0)
+          .attr("y", (d, i) => i * 20)
+          .attr("width", 15)
+          .attr("height", 15)
+          .attr("fill", d => color(d.label));
+
+    legend.selectAll("text")
+          .data(data)
+          .join("text")
+          .attr("x", 20)
+          .attr("y", (d, i) => i * 20 + 12)
+          .attr("class", "legend")
+          .text(d => `${d.label}: ${d.value}`);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pie Chart dengan D3.js</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        .slice text {
+            font-size: 14px;
+            font-weight: bold;
+            fill: white;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Contoh Grafik Lingkaran (Pie Chart) dengan D3.js</h2>
+<svg width="400" height="400"></svg>
+
+<script>
+    // Data untuk pie chart
+    const data = [10, 20, 30, 40, 50];
+
+    // Ukuran dan radius
+    const width = 400;
+    const height = 400;
+    const radius = Math.min(width, height) / 2;
+
+    // Warna untuk setiap bagian grafik
+    const color = d3.scaleOrdinal()
+                    .domain(data)
+                    .range(d3.schemeCategory10);
+
+    // SVG tempat menggambar grafik
+    const svg = d3.select("svg")
+                  .attr("width", width)
+                  .attr("height", height)
+                  .append("g")
+                  .attr("transform", `translate(${width / 2},${height / 2})`);
+
+    // Fungsi untuk layout pie
+    const pie = d3.pie();
+
+    // Fungsi untuk mengatur bentuk slice
+    const arc = d3.arc()
+                  .innerRadius(0)
+                  .outerRadius(radius);
+
+    // Menambahkan slice berdasarkan data
+    svg.selectAll("path")
+       .data(pie(data))
+       .join("path")
+       .attr("d", arc)
+       .attr("fill", d => color(d.data))
+       .attr("stroke", "white")
+       .attr("stroke-width", 2);
+
+    // Menambahkan label ke tiap slice
+    svg.selectAll("text")
+       .data(pie(data))
+       .join("text")
+       .attr("transform", d => `translate(${arc.centroid(d)})`)
+       .attr("text-anchor", "middle")
+       .attr("class", "slice")
+       .text(d => d.data);
+</script>
+
+</body>
+</html>

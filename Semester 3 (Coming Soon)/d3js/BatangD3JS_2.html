@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bar Chart dengan Legend menggunakan D3.js</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        .bar {
+            stroke: white;
+            stroke-width: 2px;
+        }
+
+        .legend {
+            font-size: 12px;
+            font-family: Arial, sans-serif;
+        }
+
+        .legend-color {
+            width: 15px;
+            height: 15px;
+            margin-right: 5px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Contoh Grafik Batang (Bar Chart) dengan Legend menggunakan D3.js</h2>
+<svg width="600" height="400"></svg>
+
+<script>
+    // Data untuk bar chart
+    const data = [
+        {label: "A", value: 30},
+        {label: "B", value: 70},
+        {label: "C", value: 45},
+        {label: "D", value: 65},
+        {label: "E", value: 20},
+        {label: "F", value: 85}
+    ];
+
+    // Ukuran dan margin grafik
+    const width = 600;
+    const height = 400;
+    const margin = { top: 50, right: 30, bottom: 50, left: 50 };
+
+    // Skala untuk sumbu X dan Y
+    const x = d3.scaleBand()
+                .domain(data.map(d => d.label))
+                .range([margin.left, width - margin.right])
+                .padding(0.1);
+
+    const y = d3.scaleLinear()
+                .domain([0, d3.max(data, d => d.value)])
+                .nice()
+                .range([height - margin.bottom, margin.top]);
+
+    // Skala warna untuk setiap batang
+    const color = d3.scaleOrdinal()
+                    .domain(data.map(d => d.label))
+                    .range(d3.schemeCategory10);
+
+    // SVG tempat menggambar grafik
+    const svg = d3.select("svg")
+                  .attr("width", width)
+                  .attr("height", height);
+
+    // Menambahkan batang berdasarkan data
+    svg.selectAll(".bar")
+       .data(data)
+       .join("rect")
+       .attr("class", "bar")
+       .attr("x", d => x(d.label))
+       .attr("y", d => y(d.value))
+       .attr("height", d => y(0) - y(d.value))
+       .attr("width", x.bandwidth())
+       .attr("fill", d => color(d.label));
+
+    // Menambahkan sumbu X
+    svg.append("g")
+       .attr("transform", `translate(0,${height - margin.bottom})`)
+       .call(d3.axisBottom(x))
+       .attr("font-size", "12px");
+
+    // Menambahkan sumbu Y
+    svg.append("g")
+       .attr("transform", `translate(${margin.left},0)`)
+       .call(d3.axisLeft(y))
+       .attr("font-size", "12px");
+
+    // Menambahkan legend di atas grafik batang
+    const legend = svg.append("g")
+                      .attr("transform", `translate(${margin.left}, ${margin.top-40})`);
+
+    legend.selectAll("rect")
+          .data(data)
+          .join("rect")
+          .attr("x", (d, i) => i * 80)
+          .attr("y", 0)
+          .attr("width", 15)
+          .attr("height", 15)
+          .attr("fill", d => color(d.label));
+
+    legend.selectAll("text")
+          .data(data)
+          .join("text")
+          .attr("x", (d, i) => i * 80 + 20)
+          .attr("y", 12)
+          .attr("class", "legend")
+          .text(d => d.label);
+</script>
+
+</body>
+</html>

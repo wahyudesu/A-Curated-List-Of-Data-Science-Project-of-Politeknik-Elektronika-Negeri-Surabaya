@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grafik Batang dan Lingkaran dalam Satu Baris</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        .bar {
+            fill: steelblue;
+        }
+
+        .bar:hover {
+            fill: orange;
+        }
+
+        .arc {
+            fill: #ffcc00;
+            stroke: #fff;
+            stroke-width: 1px;
+        }
+
+        .chart-container {
+            display: flex;
+            justify-content: space-around;
+        }
+    </style>
+</head>
+<body>
+    <h2>Grafik Batang dan Lingkaran</h2>
+    <div class="chart-container">
+        <svg id="barChart" width="400" height="300"></svg>
+        <svg id="pieChart" width="300" height="300"></svg>
+    </div>
+
+    <script>
+        // Data untuk grafik batang
+        const barData = [4, 8, 15, 16, 23, 42];
+
+        const barSvg = d3.select("#barChart");
+        const barMargin = { top: 20, right: 30, bottom: 40, left: 40 };
+        const barWidth = +barSvg.attr("width") - barMargin.left - barMargin.right;
+        const barHeight = +barSvg.attr("height") - barMargin.top - barMargin.bottom;
+
+        const barX = d3.scaleBand()
+            .domain(barData.map((d, i) => i))
+            .range([0, barWidth])
+            .padding(0.1);
+
+        const barY = d3.scaleLinear()
+            .domain([0, d3.max(barData)])
+            .range([barHeight, 0]);
+
+        const barG = barSvg.append("g")
+            .attr("transform", `translate(${barMargin.left},${barMargin.top})`);
+
+        barG.append("g")
+            .attr("class", "axis axis--x")
+            .attr("transform", `translate(0,${barHeight})`)
+            .call(d3.axisBottom(barX).tickFormat(i => `Data ${i + 1}`));
+
+        barG.append("g")
+            .attr("class", "axis axis--y")
+            .call(d3.axisLeft(barY));
+
+        barG.selectAll(".bar")
+            .data(barData)
+            .enter().append("rect")
+            .attr("class", "bar")
+            .attr("x", (d, i) => barX(i))
+            .attr("y", d => barY(d))
+            .attr("width", barX.bandwidth())
+            .attr("height", d => barHeight - barY(d));
+
+        // Data untuk grafik lingkaran
+        const pieData = [
+            { label: "A", value: 30 },
+            { label: "B", value: 70 },
+            { label: "C", value: 45 },
+            { label: "D", value: 55 },
+        ];
+
+        const pieSvg = d3.select("#pieChart");
+        const pieRadius = Math.min(+pieSvg.attr("width"), +pieSvg.attr("height")) / 2;
+        const pieG = pieSvg.append("g")
+            .attr("transform", `translate(${pieRadius}, ${pieRadius})`);
+
+        const pie = d3.pie()
+            .value(d => d.value);
+
+        const arc = d3.arc()
+            .innerRadius(0) // Grafik lingkaran penuh
+            .outerRadius(pieRadius - 10);
+
+        const arcs = pie(pieData);
+
+        pieG.selectAll(".arc")
+            .data(arcs)
+            .enter().append("path")
+            .attr("class", "arc")
+            .attr("d", arc)
+            .style("fill", (d, i) => d3.schemeCategory10[i]);
+
+        // Menambahkan legend untuk grafik lingkaran
+        pieG.selectAll(".legend")
+            .data(pieData)
+            .enter().append("text")
+            .attr("x", (d, i) => (i % 2) * (pieRadius - 30) + 10)
+            .attr("y", (d, i) => Math.floor(i / 2) * 20)
+            .text(d => `${d.label}: ${d.value}`);
+    </script>
+</body>
+</html>

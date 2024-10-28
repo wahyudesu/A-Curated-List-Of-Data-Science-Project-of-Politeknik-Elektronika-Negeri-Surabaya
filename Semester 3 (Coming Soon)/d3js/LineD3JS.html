@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Line Chart dengan Legend menggunakan D3.js</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        .line {
+            fill: none;
+            stroke-width: 2px;
+        }
+        
+        .axis-label {
+            font-size: 12px;
+            font-family: Arial, sans-serif;
+        }
+
+        .legend {
+            font-size: 12px;
+            font-family: Arial, sans-serif;
+        }
+        
+        .legend-color {
+            width: 15px;
+            height: 15px;
+            display: inline-block;
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Contoh Line Chart dengan Legend menggunakan D3.js</h2>
+<svg width="700" height="500"></svg>
+
+<script>
+    // Data untuk beberapa garis
+    const data = [
+        {name: "Dataset 1", values: [{x: 1, y: 10}, {x: 2, y: 20}, {x: 3, y: 40}, {x: 4, y: 30}, {x: 5, y: 50}]},
+        {name: "Dataset 2", values: [{x: 1, y: 15}, {x: 2, y: 25}, {x: 3, y: 30}, {x: 4, y: 45}, {x: 5, y: 60}]},
+        {name: "Dataset 3", values: [{x: 1, y: 20}, {x: 2, y: 35}, {x: 3, y: 25}, {x: 4, y: 50}, {x: 5, y: 65}]}
+    ];
+
+    // Ukuran dan margin grafik
+    const width = 700;
+    const height = 500;
+    const margin = { top: 40, right: 50, bottom: 50, left: 50 };
+
+    // Skala untuk sumbu X dan Y
+    const x = d3.scaleLinear()
+                .domain([1, 5])
+                .range([margin.left, width - margin.right]);
+
+    const y = d3.scaleLinear()
+                .domain([0, d3.max(data, d => d3.max(d.values, v => v.y))])
+                .range([height - margin.bottom, margin.top]);
+
+    // Skala warna untuk setiap garis
+    const color = d3.scaleOrdinal()
+                    .domain(data.map(d => d.name))
+                    .range(d3.schemeCategory10);
+
+    // SVG tempat menggambar grafik
+    const svg = d3.select("svg")
+                  .attr("width", width)
+                  .attr("height", height);
+
+    // Fungsi untuk membuat garis
+    const line = d3.line()
+                   .x(d => x(d.x))
+                   .y(d => y(d.y));
+
+    // Menambahkan setiap garis dari data
+    data.forEach(dataset => {
+        svg.append("path")
+           .datum(dataset.values)
+           .attr("fill", "none")
+           .attr("class", "line")
+           .attr("stroke", color(dataset.name))
+           .attr("d", line);
+    });
+
+    // Menambahkan sumbu X
+    svg.append("g")
+       .attr("transform", `translate(0,${height - margin.bottom})`)
+       .call(d3.axisBottom(x).ticks(5))
+       .append("text")
+       .attr("x", width / 2)
+       .attr("y", 40)
+       .attr("class", "axis-label")
+       .text("X Axis Label");
+
+    // Menambahkan sumbu Y
+    svg.append("g")
+       .attr("transform", `translate(${margin.left},0)`)
+       .call(d3.axisLeft(y))
+       .append("text")
+       .attr("x", -height / 2)
+       .attr("y", -40)
+       .attr("transform", "rotate(-90)")
+       .attr("class", "axis-label")
+       .text("Y Axis Label");
+
+    // Menambahkan legend di sebelah kanan atas grafik
+    const legend = svg.append("g")
+                      .attr("transform", `translate(${width - margin.right + 10}, ${margin.top})`);
+
+    legend.selectAll("rect")
+          .data(data)
+          .join("rect")
+          .attr("x", 0)
+          .attr("y", (d, i) => i * 20)
+          .attr("width", 15)
+          .attr("height", 15)
+          .attr("fill", d => color(d.name));
+
+    legend.selectAll("text")
+          .data(data)
+          .join("text")
+          .attr("x", 20)
+          .attr("y", (d, i) => i * 20 + 12)
+          .attr("class", "legend")
+          .text(d => d.name);
+</script>
+
+</body>
+</html>
